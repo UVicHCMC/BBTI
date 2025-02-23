@@ -137,7 +137,6 @@ table.attList{
 }
 td.odd_label{
     vertical-align: top;
-    width: 15em;
     font-weight: bold;
 }
 td.odd_value{
@@ -149,7 +148,6 @@ table.attDef{
     width: 100%;
 }
 table.attDef td.odd_label{
-    min-width: 10%;
     vertical-align: top;
     font-weight: normal;
 }
@@ -192,11 +190,54 @@ td p{
     margin-bottom: 2pt;
 }
 
+
+/* Messing with tables because they're too squashed. */
+td.odd_value{
+    width: 100%;
+}
+
+table.attList{
+    width: 100%;
+}
+
+ul.attList, ul.attList ul{
+    padding-left: 1em;
+
+}
+
+table.attList>tbody>tr, table.attDef>tbody>tr{
+    display: list;
+    list-style-type: none;
+    padding-left: 0;
+    ul, ol{
+        padding-left: 0.25em;
+    }
+    >td{
+        display: list-item;
+        margin: 0;
+        padding: 0;
+        list-style-type: none;
+        border: none;
+        div.pre, pre{
+            max-width: 90%;
+        }
+    }
+    table.attDef td+td{
+        margin-left: 0.5em;
+    }
+}
+
+table.wovenodd div.pre, table.wovenodd pre{
+    max-width: 90%;
+}
+
+
+
 div.cdata{
     white-space: pre;
     clear: both;
 }
-
+/*
 span.tag::before{
 
 }
@@ -206,6 +247,7 @@ span.tag::after{
 span.gi,
 span.tag{
 }
+*/
 span.att, span.attribute{
   font-weight: bold;
   color: #f5844c;
@@ -261,18 +303,20 @@ td.classSpec,
 td.macroSpec{
     font-weight: bold;
 }
-a.link_odd_element: link,
-a.link_odd_element: visited{
-    /*     color: #006400; */
+/*
+a.link_odd_element:link,
+a.link_odd_element:visited{
+    \/*     color: #006400; *\/
 }
-a.link_odd_macro: link,
-a.link_odd_macro: visited{
+a.link_odd_macro:link,
+a.link_odd_macro:visited{
 
 }
-a.link_odd_class: link,
-a.link_odd_class: visited{
+a.link_odd_class:link,
+a.link_odd_class:visited{
 
-}
+}*/
+
 span.element{
     font-weight: bold;
     color: black;
@@ -294,6 +338,25 @@ span.attributevalue{
     font-weight: normal;
     color: #993300;
 }
+
+span.fillable-attval{
+    display:none;
+}
+
+#configQuickstart_egXML_control:checked ~ div#configQuickstart_egXML span.attributevalue:has(.fillable-attval){
+    span.fillable-attval{
+        display: inline;
+    }
+    span.initial-value{
+       display:none;
+    }
+}
+
+/*span.attributevalue + .attribute:has( +.attributevalue > .fillable-attval):before {
+    content: "";
+    display: block;
+}
+*/
 span.comment{
     color: black;
     font-style: italic;
@@ -349,11 +412,15 @@ span.moduleSpecHead{
     font-style: italic;
 }
 ul.specList{
-    position: relative;
-    left: -2em;
+    margin-left: -2em;
     padding: 0.5em;
     background-color: #e0e0e0;
     width: calc(100% + 2em);
+    @media only screen and (max-width: 768px) {
+        margin-left: 0;
+        margin-right: 0.25em;
+        width: auto;
+    }
 }
 ul.specList li{
     list-style: none;
@@ -412,8 +479,8 @@ span.specName{
     padding: 0;
     width: 1.5em;
 }
-.index a: link,
-.index a: visited{
+.index a:link,
+.index a:visited{
     background: #fff;
     color: navy;
     display: block;
@@ -425,14 +492,14 @@ span.specName{
     border: 1px solid #999;
 }
 li.showall,
-li.showall a: visited,
-li.showall a: link{
+li.showall a:visited,
+li.showall a:link{
     width: 10em;
 }
 * html .index li{
     margin: 0.2em 0.2em;
 }
-ul.index li a: hover{
+ul.index li a:hover{
     background-color: #93D1E4;
     color: #fff;
     text-decoration: underline;
@@ -472,7 +539,7 @@ span.specChildModule{
 div.specChild{
     margin-bottom: 4pt;
     margin-left: 25px;
-    text-indent: -30px;
+    text-indent: -20px;
 }
 span.emptySlash::after{
     content: "/";
@@ -682,6 +749,12 @@ h2{
     margin-bottom: 0.7em;
     font-weight: bold;
     margin-left: -3em;
+    background-color: white;
+    padding: 0.5em;
+    border: solid 1pt gray;
+    @media only screen and (max-width: 768px) {
+        margin-left: 0;
+    }
 }
 
 h3{
@@ -690,6 +763,16 @@ h3{
     margin-bottom: 0.5em;
     font-style: italic;
     margin-left: -2em;
+    background-color: white;
+    padding: 0.25em;
+    border: solid 1pt gray;
+    @media only screen and (max-width: 768px) {
+        margin-left: 0;
+    }
+}
+
+.teidiv2 h3{
+    font-size: 1em;
 }
 
 h1.maintitle{
@@ -788,24 +871,24 @@ div.breadcrumb{
     display: none;
 }
 
-a: hover
+a:hover
 {
     text-decoration: underline;
 }
 
-a.navbar: link
+a.navbar:link
 {
     color: #FFFFFF;
     text-decoration: none;
 }
 
-a.navbar: visited
+a.navbar:visited
 {
     color: #FFFFFF;
     text-decoration: none;
 }
 
-a.navbar: hover{
+a.navbar:hover{
     color: #FFFFFF;
     text-decoration: underline;
 }
@@ -846,6 +929,8 @@ div.eg{
     font-size: 10pt;
     white-space: pre;
     background-color: silver;
+    max-width: 35em;
+    text-wrap: wrap;
 }
 
 div.pre{
@@ -868,6 +953,9 @@ div.egXML_invalid{
 /* table of contents */
 ul.toc{
     list-style: none;
+    @media only screen and (max-width: 768px) {
+        padding-left: 1em;
+    }
 }
 li.toc{
     list-style: none;
@@ -875,16 +963,16 @@ li.toc{
 
 /* table of contents links */
 
-a.inlinetoc: link,
-a.inlinetoc: visited
+a.inlinetoc:link,
+a.inlinetoc:visited
 {
     color: #7A7A7A;
     font-size: smaller;
     text-decoration: none;
 }
 
-a.inlinetoc-this: visited,
-a.inlinetoc-this: link
+a.inlinetoc-this:visited,
+a.inlinetoc-this:link
 {
     font-size: smaller;
     color: #000000;
@@ -892,8 +980,8 @@ a.inlinetoc-this: link
     text-decoration: underline;
 }
 
-a.inlinetoc-sub: visited,
-a.inlinetoc-sub: link
+a.inlinetoc-sub:visited,
+a.inlinetoc-sub:link
 {
     text-decoration: none;
     color: #000000;
@@ -939,8 +1027,8 @@ span.toclist-this{
     color: red;
 }
 
-a.toclist: visited,
-a.toclist: link
+a.toclist:visited,
+a.toclist:link
 {
     font-weight: bold;
     color: #000000;
@@ -1083,10 +1171,10 @@ div.numbering{
     font-size: smaller;
     width: 2em;
 }
-
+/* 
 div.linenumber{
 }
-
+ */
 div.signed{
     text-align: left;
 }
@@ -1123,6 +1211,9 @@ tr.label td{
 
 span.label{
     font-weight: bold;
+    @media only screen and (max-width: 768px) {
+        font-size: 0.8rem;
+    }
 }
 
 h5{
@@ -1215,8 +1306,10 @@ div.q{
     font-style: italic;
 }
 /* inline quote */
+/* 
 span.q{
-}
+} 
+*/
 
 /* from drama */
 /* speeches in drama */
@@ -1277,11 +1370,12 @@ span.titlem{
 span.titlej{
     font-style: italic;
 }
+/* 
 span.titleu{
 }
 span.titles{
 }
-
+ */
 aside,
 span.notemargin,
 span.notemarginOuter,
@@ -1390,7 +1484,7 @@ p.mainEditor{
 
 /* for ePub */
 div.EpubCoverPage{
-    -webkit-hyphens: none;
+    hyphens: none;
     font-family: serif;
     height: 860pt;
     font-size: 30pt;
@@ -1500,10 +1594,10 @@ span.foreign{
 }
 
 /* transcription */
-
+/* 
 div.sourceDoc{
 }
-
+ */
 div.surfaceGrp{
     border-bottom-width: 1pt;
     border-bottom-color: green;
@@ -1525,10 +1619,10 @@ div.zone{
     border-color: lightgrey;
     margin-bottom: 0.5ex;
 }
-
+/* 
 div.line{
 }
-
+ */
 div.facsimage{
     float: right;
 }
@@ -1552,8 +1646,10 @@ div.app{
     margin-top: 1pt;
     font-size: smaller;
 }
+/* 
 span.lemma{
 }
+ */
 span.lemmawitness{
     font-weight: bold;
 }
@@ -1590,3 +1686,72 @@ table.border{
 .orange{
     color: orange;
 }
+
+/* Updates 2022-2024 to make our documentation more readable. */
+body{
+    font-family: georgia, sans-serif;
+}
+
+div.tei_front{
+    padding: 0.25rem 1rem;
+}
+
+div.tei_body{
+    border: solid 1pt black;
+    padding: 1em;
+    background-color: #f9f9f9;
+}
+
+div.tei_back{
+    @media only screen and (max-width: 768px) {
+        max-width: 92vw;
+        padding: 0.2em 1vw;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
+div.tei_body>nav{
+    max-width: 43vw;
+}
+
+a:link, a:visited, a.anchorlink{
+    color: #882200;
+}
+
+table{
+    border-collapse: collapse;
+    margin-top: 0.25em;
+}
+
+li.item div.table{
+    @media only screen and (max-width: 768px) {
+        tr{
+            display: list;
+            border-bottom: solid 1pt gray;
+            td{
+                display: list-item;
+                list-style-type: none;
+            }
+        }
+    }
+}
+
+/* section[id] div.table table>tbody>tr{
+    @media only screen and (max-width: 768px) {
+        display: list;
+        list-style-type: none;
+        border-style: solid;
+        border-color: gray;
+        border-width: 1pt 0;
+        td:first-child{
+            padding-top: 0.25em;
+            margin-top: 0.25em;
+            font-weight: bold;
+            text-decoration: underline;
+        }
+        td{
+            display: list-item;
+        }
+    }
+} */

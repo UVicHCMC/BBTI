@@ -25,7 +25,11 @@
      ****************************************************************-->
 
   <!--  We need ant contrib. -->
-  <taskdef resource="net/sf/antcontrib/antcontrib.properties"/>
+  <taskdef resource="net/sf/antcontrib/antcontrib.properties">
+    <classpath>
+      <pathelement location="${basedir}/lib/ant-contrib.jar"/>
+    </classpath>
+  </taskdef>
 
 
   <!--****************************************************************
@@ -33,17 +37,30 @@
      *                           Properties                         *
      *                                                              *
      ****************************************************************-->
-
+  
+  <!-- We want to allow users to turn fork=true off if they need to
+       because of Security Manager warnings. -->
+  <property name="javaFork" value="true"/>
 
   <!-- We want our own base directory in case basedir is overridden
        by an invoking ant process. -->
   <dirname property="ssBaseDir" file="${ant.file}"/>
 
+  <pathconvert property="ssBaseDir.converted" dirsep="/">
+    <path location="${ssBaseDir}" />
+    <!-- Ant under cygwin uses a lowercase drive letter, which some Java
+	 programs don't recognise as a drive letter, so translate. -->
+    <map from="c:" to="C:"/>
+    <map from="d:" to="D:"/>
+    <map from="e:" to="E:"/>
+    <map from="z:" to="Z:"/>
+  </pathconvert>
+
   <!-- Use the saxon in our lib folder. -->
-  <property name="ssSaxon" value="${ssBaseDir}/lib/saxon-he-10.jar"/>
+  <property name="ssSaxon" value="${ssBaseDir.converted}/lib/saxon-he-12.5.jar"/>
   
   <!-- Use the closure compiler in our lib folder. -->
-  <property name="ssClosure" value="${ssBaseDir}/lib/closure-compiler.jar"/>
+  <property name="ssClosure" value="${ssBaseDir.converted}/lib/closure-compiler.jar"/>
   <taskdef name="jscomp" classname="com.google.javascript.jscomp.ant.CompileTask" classpath="${ssClosure}"/>
   
   <!-- Normally we suppress warnings, but we may turn them ("verbose") on for testing. -->
@@ -57,16 +74,11 @@
   <!-- What output conformity we want for our JS. We're fairly forward-looking by default. -->
   <property name="ssClosureOutputSpec" value="ECMASCRIPT_2019"/>
 
-  <!-- DEPRECATED UNPREFIXED PROPERTIES. IF SET, SHOULD ABORT THE BUILD.
-         REMOVE AFTER 1.2 RELEASE. -->
-  <property name="config" value="OBSOLETE"/>
-  <property name="configFile" value="OBSOLETE"/>
-
   <!--The configuration file path, relative to this build file. -->
   <property name="ssConfig" value="configTest.xml"/>
 
   <!--The full path to the configuration file. You can use either this or ssConfig. -->
-  <property name="ssConfigFile" value="${ssBaseDir}/${ssConfig}"/>
+  <property name="ssConfigFile" value="${ssBaseDir.converted}/${ssConfig}"/>
   
   <!-- Get the config file name in case it was passed as a full path. -->
   <basename property="ssConfigFileName" file="${ssConfigFile}"/>
@@ -74,9 +86,25 @@
   <!--The derived name of the configuration directory based off of the configuration
         file path-->
   <dirname property="configDir" file="${ssConfigFile}"/>
+  
+  <condition property="isWindows">
+    <os family="windows" />
+  </condition>
+  
+  
+
+  <pathconvert property="configDir.converted" dirsep="/">
+    <path location="${configDir}" />
+    <!-- Ant under cygwin uses a lowercase drive letter, which some Java
+	 programs don't recognise as a drive letter, so translate. -->
+    <map from="c:" to="C:"/>
+    <map from="d:" to="D:"/>
+    <map from="e:" to="E:"/>
+    <map from="z:" to="Z:"/>
+  </pathconvert>
 
   <!--Load the configuration file as a property file-->
-  <xmlproperty file="${ssConfigFile}" keeproot="true"/>
+  <xmlproperty file="${ssConfigFile}" keeproot="true" collapseattributes="true"/>
 
   <!--Set the verbose flag to false by default; set to true to see detailed messages-->
   <property name="ssVerbose" value="false"/>
@@ -86,16 +114,28 @@
   <property name="ssVerboseReport" value="false"/>
 
   <!--The path to the search page, relative to the configuration directory-->
-  <property name="ssSearchFilePath" location="${configDir}/${config.params.searchFile}"/>
+  <property name="ssSearchFilePath" value="${configDir.converted}/${config.params.searchPage.file}"/>
 
   <!--The name of the collection dir, derived from the search file-->
   <dirname property="ssCollectionDirName" file="${ssSearchFilePath}"/>
 
+  <pathconvert property="ssCollectionDirName.converted" dirsep="/">
+    <path location="${ssCollectionDirName}" />
+    <!-- Ant under cygwin uses a lowercase drive letter, which some Java
+	 programs don't recognise as a drive letter, so translate. -->
+    <map from="c:" to="C:"/>
+    <map from="d:" to="D:"/>
+    <map from="e:" to="E:"/>
+  </pathconvert>
+
   <!--Output folder, which is forked, depending on whether or not an output folder
         is specified in the configuration file-->
-  <property name="ssOutputFolder" if:set="config.params.outputFolder"
-    value="${config.params.outputFolder}"/>
-  <property name="ssOutputFolder" unless:set="config.params.outputFolder" value="staticSearch"/>
+  <property name="ssOutputFolder"
+    if:set="config.params.output.dir"
+    value="${config.params.output.dir}"/>
+  <property name="ssOutputFolder"
+    unless:set="config.params.output.dir"
+    value="staticSearch"/>
 
   <!--Stemmer folder, which is forked, depending on whether or not a stemmer folder
         is specified in the configuration file-->
@@ -105,7 +145,7 @@
 
   <!--The directory for all of the static search assets (JSON files, Javascripts, et cetera).
         Note that the static search directory is placed directly within the collection directory-->
-  <property name="staticSearchDir" value="${ssCollectionDirName}/${ssOutputFolder}"/>
+  <property name="staticSearchDir" value="${ssCollectionDirName.converted}/${ssOutputFolder}"/>
   
   <!--The NAME of the temporary folder, which we treat as a constant-->
   <property name="staticSearchTempFolder" value="ssTemp"/>
@@ -122,7 +162,7 @@
   <!--The temporary search page, which is constructed by appending ssTemp_ to the search base name
         and placing that file in the collectionDir-->
   <property name="tempSearchPageOutput"
-    value="${ssCollectionDirName}/ssTemp_${ssSearchPageBasename}"/>
+    value="${ssCollectionDirName.converted}/ssTemp_${ssSearchPageBasename}"/>
 
 
   <!--****************************************************************
@@ -138,10 +178,10 @@
       deletes any previous results from an earlier build and then recreates the staticSearchDir,
       which is simply the parent directory of the search file specified in the config file. In the
       special case of the test, this target also generates the VERSION file. </description>
-    <echo message="Initializing staticSearch build using codebase in ${ssBaseDir}..."/>
+    <echo message="Initializing staticSearch build using codebase in ${ssBaseDir.converted}..."/>
     <echo message="Deleting old products..."/>
     <delete dir="temp"/>
-    <delete file="${ssBaseDir}/xsl/config.xsl"/>
+    <delete file="${ssBaseDir.converted}/xsl/config.xsl"/>
     <delete file="${tempSearchPageOutput}"/>
     <delete dir="${staticSearchDir}"/>
     <echo message="Creating new static search directory: ${staticSearchDir}"/>
@@ -150,30 +190,9 @@
     <echo>Running staticSearch build based on config file: 
     ${ssConfigFile}</echo>
 
-    <!-- For version 1.2 only, we need to warn users if they're still using
-             the old config and configFile property names as parameters. -->
-    <if>
-      <or>
-        <not>
-          <equals arg1="${config}" arg2="OBSOLETE"/>
-        </not>
-        <not>
-          <equals arg1="${configFile}" arg2="OBSOLETE"/>
-        </not>
-      </or>
-      <then>
-        <echo message="*************************************************"/>
-        <echo message="DEPRECATION WARNING: It appears that you're still"/>
-        <echo message="using one of the deprecated 'config' or 'configFile' "/>
-        <echo message="parameters. Please switch to using 'ssConfig' and/or "/>
-        <echo message="'ssConfigFile' instead."/>
-        <echo message=""/>
-        <fail message="BUILD FAILED."/>
-      </then>
-    </if>
-
     <!-- If we're building the test data, we need to generate the VERSION file
          and also copy the .htm_ files to .html before starting. -->
+    <echo message="${ssConfigFileName}"/>
     <if>
       <equals arg1="configTest.xml" arg2="${ssConfigFileName}"/>
       <then>
@@ -190,7 +209,7 @@
               <arg value="rev-parse"/>
               <arg value="--short"/>
               <arg value="HEAD"/>
-              <redirector output="${ssBaseDir}/test/VERSION"/>
+              <redirector output="${ssBaseDir.converted}/test/VERSION"/>
             </exec>
           </then>
           <else>
@@ -203,7 +222,7 @@
                 </op>
               </op>
             </math>
-            <echo file="${ssBaseDir}/test/VERSION" message="vrand${rand}"/>
+            <echo file="${ssBaseDir.converted}/test/VERSION" message="vrand${rand}"/>
           </else>
         </if>
       </then>
@@ -216,36 +235,89 @@
     <if>
       <equals arg1="configTest.xml" arg2="${ssConfigFileName}"/>
       <then>
-        <copy file="${ssBaseDir}/test/search.htm_" tofile="${ssBaseDir}/test/search.html"/>
+        <copy file="${ssBaseDir.converted}/test/search.htm_" tofile="${ssBaseDir.converted}/test/search.html"/>
       </then>
     </if>
   </target>
-
-  <target name="validate">
+  
+  <target name="checkConfigVersion">
     <description>
-      TARGET: validate
-      Task to validate that the source XHTML is well-formed XHTML. Note that this DOES
+      TARGET checkConfigVersion
+      Checks the supplied configuration file to see if it has 
+      @version="2" on its root element. If not, it invokes the
+      conversion process.
+    </description>
+    <echo message="Checking version of config file ${ssBaseDir.converted}/${ssConfig}..."/>
+    <fileset id="configOnly" dir="${ssBaseDir.converted}" includes="${ssConfig}">
+      <containsregexp expression="&lt;config[^&gt;]+version\s*=\s*.2."/>
+    </fileset>
+    <condition property="isV2" value="true" else="false">
+      <matches pattern="^2" string="${config.version}"/>
+    </condition>
+    
+    <antcall target="convertConfigFile" unless:true="${isV2}"/>
+  </target>
+  
+  <target name="convertConfigFile">
+    <description>
+      TARGET convertConfigFile
+      This runs an identity transform on the supplied config
+      file to create from it a version 2 file, and then reports
+      the outcome to the user.
+    </description>
+    <input addproperty="outputStrategy"
+           message="Your config file is for version 1 of staticSearch.&#x0a;
+It will be converted to version 2 format.&#x0a;
+Would you like to overwrite the existing file or &#x0a;
+create a new file? (o=overwrite, n=new)"
+           validargs="o,n"
+           defaultvalue="n"/>
+    <!--<echo message="${outputStrategy}"/>-->
+    <java classpath="${ssSaxon}" classname="net.sf.saxon.Transform" failonerror="true" fork="true">
+      <arg value="-xsl:${ssBaseDir.converted}/xsl/convert_v1_to_v2.xsl"/>
+      <arg value="-s:${ssBaseDir.converted}/${ssConfig}"/>
+      <arg value="--suppressXsltNamespaceCheck:on"/>
+      <arg value="ssBaseDir=${ssBaseDir.converted}"/>
+      <arg value="ssVerbose=${ssVerbose}"/>
+      <arg value="output=${outputStrategy}"/>
+    </java>
+  </target>
+  
+  <target name="validate.html">
+    <description>
+      TARGET: validate.html
+      Target to check input files as well-formed XHTML. Note that this DOES
       NOT check whether or not it is valid XHTML: only that it is well-formed. This target also
       checks the config file and sees if it's invalid. We don't fail if it's invalid, though, since
       we must assume that some people just don't care: but raise the error anyway. 
     </description>
-    <echo message="Validating ${ssCollectionDirName} for well-formedness"/>
+    <echo message="Validating ${ssCollectionDirName.converted} for well-formedness"/>
     <!--@lenient='true' since we are only checking well-formedness-->
     <xmlvalidate lenient="true">
       <!--TODO: This should really validate the actual set of files, and not just any-->
-      <fileset dir="${ssCollectionDirName}" casesensitive="false">
+      <fileset dir="${ssCollectionDirName.converted}" casesensitive="false">
         <filename regex=".+\..?htm.?$"/>
         <!--Don't validate items that may be in a different staticSearch output-->
         <exclude name="**/${staticSearchTempFolder}/**"/>
         <exclude name="**/staticSearch_report.html"/>
       </fileset>
     </xmlvalidate>
+  </target>
+  
+  <target name="validate.config" depends="checkConfigVersion">
     <echo message="Validating ${ssConfigFile} against the staticSearch schema..."/>
     <exec executable="java" failonerror="false">
-      <arg line="-jar ${ssBaseDir}/lib/jing.jar"/>
-      <arg value="${ssBaseDir}/schema/staticSearch.rng"/>
+      <arg line="-jar ${ssBaseDir.converted}/lib/jing.jar"/>
+      <arg value="${ssBaseDir.converted}/schema/staticSearch.rng"/>
       <arg value="${ssConfigFile}"/>
     </exec>
+  </target>
+
+  <target name="validate" depends="validate.config, validate.html">
+    <description>
+      TARGET: validate
+      Task to validate various input files, including the XHTML and the configuration file.
+    </description>
   </target>
 
 
@@ -259,12 +331,14 @@
       parameter. </description>
     <echo message="Creating configuration file..."/>
     <java classpath="${ssSaxon}" classname="net.sf.saxon.Transform" failonerror="true" fork="true">
-      <arg value="-xsl:${ssBaseDir}/xsl/create_config_xsl.xsl"/>
-      <arg value="-s:${ssBaseDir}/xsl/create_config_xsl.xsl"/>
-      <arg value="configFile=${ssConfigFile}"/>
+      <arg value="-xsl:${ssBaseDir.converted}/xsl/create_config_xsl.xsl"/>
+      <arg value="-s:${ssBaseDir.converted}/xsl/create_config_xsl.xsl"/>
       <arg value="--suppressXsltNamespaceCheck:on"/>
-      <arg value="verbose=${ssVerbose}"/>
-      <arg value="ssPatternsetFile=${ssPatternsetFile}"/>
+      <arg value="configFile=file://${ssConfigFile}" unless:true="${isWindows}"/>
+      <arg value="configFile=file:///${ssConfigFile}" if:true="${isWindows}"/>
+      <arg value="ssBaseDir=${ssBaseDir.converted}"/>
+      <arg value="ssVerbose=${ssVerbose}"/>
+      <arg value="ssPatternsetFile=file:///${ssPatternsetFile}"/>
     </java>
   </target>
   
@@ -279,17 +353,18 @@
     <loadfile srcFile="${ssPatternsetFile}" property="ptn" failonerror="true"/>
 
     <xslt
-      style="${ssBaseDir}/xsl/tokenize.xsl" classpath="${ssSaxon}" destdir="${staticSearchTempDir}"
-       reloadstylesheet="true"
+      style="${ssBaseDir.converted}/xsl/tokenize.xsl" classpath="${ssSaxon}" destdir="${staticSearchTempDir}"
+       reloadstylesheet="true" 
        force="true"
       useimplicitfileset="false">
       <factory name="net.sf.saxon.TransformerFactoryImpl"/>
-      <fileset id="siteFiles" dir="${ssCollectionDirName}" casesensitive="no">
+      <fileset id="siteFiles" dir="${ssCollectionDirName.converted}" casesensitive="no">
         <includesfile name="${ssPatternsetFile}"/>
         <!--Exclude the temporary directory's basename-->
         <exclude name="**/${staticSearchTempFolder}/**"/>
       </fileset>
-      <regexpmapper from="^(.*)\.([^\.]+$)" to="\1_tokenized.html"/>
+
+       <regexpmapper from="^(.*)\.([^\.]+$)" to="\1_tokenized.html"/>
     </xslt>
     <!--Necessary to delete any empty files (i.e. files excluded by 
         the configuration) -->
@@ -310,8 +385,8 @@
       time, depending on the size of the resource collection. </description>
     <echo message="Creating individual JSON files..."/>
     <java classpath="${ssSaxon}" classname="net.sf.saxon.Transform" failonerror="true" fork="true">
-      <arg value="-xsl:${ssBaseDir}/xsl/json.xsl"/>
-      <arg value="-s:${ssBaseDir}/xsl/json.xsl"/>
+      <arg value="-xsl:${ssBaseDir.converted}/xsl/json.xsl"/>
+      <arg value="-s:${ssBaseDir.converted}/xsl/json.xsl"/>
       <arg value="--suppressXsltNamespaceCheck:on"/>
     </java>
   </target>
@@ -344,7 +419,7 @@
             in the XSLT.-->
     <available type="dir" property="hasFilters" file="${staticSearchDir}/filters" value="true"/>
     <java classpath="${ssSaxon}" classname="net.sf.saxon.Transform" failonerror="true" fork="true">
-      <arg value="-xsl:${ssBaseDir}/xsl/makeSearchPage.xsl"/>
+      <arg value="-xsl:${ssBaseDir.converted}/xsl/makeSearchPage.xsl"/>
       <arg value="-s:${ssSearchFilePath}"/>
       <arg value="-o:${tempSearchPageOutput}"/>
       <arg value="hasFilters=${hasFilters}"/>
@@ -373,6 +448,25 @@
     <copy file="${ssSearchFilePath}" tofile="${ssDebugSearchPage}"/>
     <replace file="${ssDebugSearchPage}" token="ssSearch.js" value="ssSearch-debug.js"/>
   </target>
+  
+  <target name="makeManualDebugSearchPage">
+    <description>
+      TARGET: makeManualDebugSearchPage
+      This copies the newly-produced search page to a new file
+      and then replaces the link to ssSearch.js with one to 
+      ssSearch-debug.js, for better testing, but also removes the
+      link to the test set, so that the search page has no activity
+      on load and can be used for manual testing and debugging.
+    </description>
+    <propertyregex property="ssManualDebugSearchPage" 
+      input="${ssSearchFilePath}"
+      regexp="(\.[a-zA-Z]+)$"
+      replace="-manual-debug\1"
+      global="false"/>
+    <echo message="Creating manual debug search page: ${ssManualDebugSearchPage}"/>
+    <copy file="${ssSearchFilePath}" tofile="${ssManualDebugSearchPage}"/>
+    <replaceregexp file="${ssManualDebugSearchPage}" match="&lt;/svg>.+&lt;/body>" replace="&lt;/svg>&lt;/a>&lt;/div>&lt;/div>&lt;/body>" flags="s"/>
+  </target>
 
   <target name="report">
     <description>
@@ -393,14 +487,14 @@
       </fileset>
     </resourcecount>
     <java classpath="${ssSaxon}" classname="net.sf.saxon.Transform" failonerror="true" fork="true">
-      <arg value="-xsl:${ssBaseDir}/xsl/create_reports.xsl"/>
-      <arg value="-s:${ssBaseDir}/xsl/create_reports.xsl"/>
+      <arg value="-xsl:${ssBaseDir.converted}/xsl/create_reports.xsl"/>
+      <arg value="-s:${ssBaseDir.converted}/xsl/create_reports.xsl"/>
       <arg value="--suppressXsltNamespaceCheck:on"/>
       <arg value="hasFilters=${hasFilters}"/>
       <arg value="stemFileCount=${stemFileCount}"/>
       <arg value="verboseReport=${ssVerboseReport}"/>
     </java>
-    <move file="${ssBaseDir}/staticSearch_report.html"
+    <move file="${ssBaseDir.converted}/staticSearch_report.html"
       tofile="${staticSearchDir}/staticSearch_report.html"/>
     <echo message="The build process has produced the following report: "/>
     <echo message="${staticSearchDir}/staticSearch_report.html"/>
@@ -419,8 +513,8 @@
     </description>
     <echo message="Creating document concordance..."/>
     <java classpath="${ssSaxon}" classname="net.sf.saxon.Transform" failonerror="true" fork="true">
-      <arg value="-xsl:${ssBaseDir}/xsl/create_concordance.xsl"/>
-      <arg value="-s:${ssBaseDir}/xsl/create_concordance.xsl"/>
+      <arg value="-xsl:${ssBaseDir.converted}/xsl/create_concordance.xsl"/>
+      <arg value="-s:${ssBaseDir.converted}/xsl/create_concordance.xsl"/>
       <arg value="-it:makeConcordance"/>
       <arg value="--suppressXsltNamespaceCheck:on"/>
     </java>
@@ -435,13 +529,14 @@
       the expanded debug version, and the CSS.
     </description>
     <copy todir="${staticSearchDir}/">
-      <fileset dir="${ssBaseDir}/js">
+      <fileset dir="${ssBaseDir.converted}/js">
         <include name="ssSearch.js"/>
+        <include name="ssSearch.js.map"/>
         <include name="ssSearch-debug.js"/>
         <include name="ssHighlight.js"/>
         <include name="ssInitialize.js"/>
       </fileset>
-      <fileset dir="${ssBaseDir}/css">
+      <fileset dir="${ssBaseDir.converted}/css">
         <include name="ss**.css"/>
       </fileset>
     </copy>
@@ -458,8 +553,10 @@
     <!--Added 2021-02-19: Remove the dictionary files-->
     <delete dir="${staticSearchDir}/dicts"/>
     <!--Added 2021-03-17: Remove the JS build files. -->
-    <delete file="${ssBaseDir}/js/ssSearch.js"/>
-    <delete file="${ssBaseDir}/js/ssSearch-debug.js"/>
+    <delete file="${ssBaseDir.converted}/js/ssSearch.js"/>
+    <delete file="${ssBaseDir.converted}/js/ssSearch-debug.js"/>
+    <delete file="${ssBaseDir.converted}/search-debug.html"/>
+    <delete file="${ssBaseDir.converted}/search-manual-debug.html"/>
   </target>
 
   <target name="buildJS">
@@ -471,8 +568,8 @@
       to create a compressed version for production use.
     </description>
     <echo message="Compiling JavaScript source code..."/>
-    <concat destfile="${ssBaseDir}/js/ssSearch-debug.js" encoding="UTF-8">
-      <filelist dir="${ssBaseDir}/js">
+    <concat destfile="${ssBaseDir.converted}/js/ssSearch-debug.js" encoding="UTF-8">
+      <filelist dir="${ssBaseDir.converted}/js">
         <file name="ssPreamble.js"/>
         <file name="ssUtilities.js"/>
         <file name="StaticSearch.js"/>
@@ -480,18 +577,32 @@
         <file name="XSet.js"/>
         <file name="SSTypeAhead.js"/>
       </filelist>
-      <fileset dir="${ssBaseDir}/stemmers/${ssStemmerFolder}">
+      <fileset dir="${ssBaseDir.converted}/stemmers/${ssStemmerFolder}">
         <include name="ssStemmer.js"/>
       </fileset>
     </concat>
     <!-- Note that we're currently suppressing warnings when compiling. -->
-    <jscomp compilationLevel="${ssClosureCompilationLevel}" warning="${ssClosureWarning}" 
+    <!--<jscomp compilationLevel="${ssClosureCompilationLevel}" warning="${ssClosureWarning}" 
       debug="false" languageOut="${ssClosureOutputSpec}"
-      output="${ssBaseDir}/js/ssSearch.js">
-      <sources dir="${ssBaseDir}/js">
+      output="${ssBaseDir.converted}/js/ssSearch.js">
+      <sources dir="${ssBaseDir.converted}/js">
+        <file name="ssSearch-debug.js"/>
+      </sources>
+    </jscomp>-->
+    <jscomp compilationLevel="${ssClosureCompilationLevel}" 
+      warning="${ssClosureWarning}" 
+      debug="false" languageOut="${ssClosureOutputSpec}" 
+      output="${ssBaseDir.converted}/js/ssSearch.js"
+      sourceMapFormat="V3"
+      sourceMapLocationMapping="js/ssSearch-debug.js|ssSearch-debug.js"
+      sourceMapOutputFile="${ssBaseDir.converted}/js/ssSearch.js.map"
+      >
+      <sources dir="${ssBaseDir.converted}/js">
         <file name="ssSearch-debug.js"/>
       </sources>
     </jscomp>
+    <echo message="Adding source map comment to the end of the ssSearch.js file..."/>
+    <echo file="${ssBaseDir.converted}/js/ssSearch.js" append="true">&#x0a;//# sourceMappingURL=ssSearch.js.map</echo>
   </target>
 
   <target name="all"
@@ -512,7 +623,7 @@
   </target>
 
   <target name="test"
-    depends="init, validate, config, tokenize, json, buildJS, copyFiles, makeSearchPage, makeDebugSearchPage, report">
+    depends="init, validate, config, tokenize, json, buildJS, copyFiles, makeSearchPage, makeDebugSearchPage, makeManualDebugSearchPage, report">
     <description>
       TARGET: test
       Target that runs the whole process, but does not clean up the
@@ -526,6 +637,12 @@
       TARGET: basic
       Target that runs the whole process other than the report creation.
     </description>
+  </target>
+
+  <!-- Utility targets. -->
+
+  <target name="echoproperties">
+    <echoproperties />
   </target>
 
 </project>

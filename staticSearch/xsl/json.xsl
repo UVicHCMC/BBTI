@@ -205,7 +205,7 @@
                 <xsl:call-template name="makeMap"/>
             </xsl:variable>
             <xsl:result-document href="{$outDir}/stems/{$stem}{$versionString}.json" method="text">
-                <xsl:sequence select="xml-to-json($map, map{'indent': $indentJSON})"/>
+                <xsl:sequence select="xml-to-json($map)"/>
             </xsl:result-document>
         </xsl:for-each-group>
     </xsl:template>
@@ -220,9 +220,7 @@
         <xsl:if test="position() = 1">
             <xsl:message>Creating <xsl:value-of select="last()"/> JSON documents...</xsl:message>
         </xsl:if>
-        <xsl:if test="$verbose">
-            <xsl:message>Processing <xsl:value-of select="current-grouping-key()"/></xsl:message>
-        </xsl:if>
+        <xsl:message use-when="$verbose">Processing <xsl:value-of select="current-grouping-key()"/></xsl:message>
         <!--Figure out ten percent-->
         <xsl:variable name="tenPercent" select="max((last() idiv 10, 1))"/>
         <!--Get the rough percentage-->
@@ -291,7 +289,7 @@
                     then use that as the grouping-key; otherwise,
                     use the document uri -->
                 <xsl:for-each-group select="$stemGroup"
-                    group-by="document-uri(/)">
+                    group-by="base-uri(.)">
                     <!--Sort the documents so that the document with the most number of this hit comes first-->
                     <xsl:sort select="count(current-group())" order="descending"/>
                     
@@ -304,9 +302,9 @@
                     <!--Get the total number of documents (i.e. the number of iterations that this
                         for-each-group will perform) for this span-->
                     <xsl:variable name="stemDocsCount" select="last()" as="xs:integer"/>
-                    <xsl:if test="$verbose">
-                        <xsl:message><xsl:value-of select="$stem"/>: Processing <xsl:value-of select="$currDocUri"/></xsl:message>
-                    </xsl:if>
+                   
+                    <xsl:message use-when="$verbose"><xsl:value-of select="$stem"/>: Processing <xsl:value-of select="$currDocUri"/></xsl:message>
+                    
                     
                     <!--The document that we want to process will always be the ancestor html of
                         any item of the current-group() -->
@@ -322,25 +320,19 @@
                     
                    <!--Map for each document that has this token-->
                     <map xmlns="http://www.w3.org/2005/xpath-functions">
-                        <!--Now the document ID, which we've created (if necessary) in the
-                        tokenization step -->
-                        <string key="docId">
-                            <xsl:value-of select="$thisDoc/@id"/>
-                        </string>
-                        
-                        <!--And the relative URI from the document, which is to be used
+                        <!--First the relative URI from the document, which is to be used
                         for linking from the KWIC to the document. We've created this
                         already in the tokenization stage and stored it in a custom
                         data-attribute-->
                         <string key="docUri">
-                            <xsl:value-of select="$thisDoc/@data-staticSearch-relativeUri"/>
+                            <xsl:value-of select="$thisDoc/@ss-uri"/>
                         </string>
                         
                         <!--The document's score, forked depending on configured
                             algorithm -->
                         <number key="score">
                             <xsl:choose>
-                                <xsl:when test="$scoringAlgorithm = 'tf-idf'">
+                                <xsl:when test="$scoringAlgorithm.name = 'tf-idf'">
                                     <xsl:sequence select="hcmc:returnTfIdf($rawScore, $stemDocsCount, $currDocUri)"/>
                                 </xsl:when>
                                 <xsl:otherwise>
@@ -350,7 +342,7 @@
                         </number>
                         
                         <!--Now add the contexts array, if specified to do so -->
-                        <xsl:if test="$phrasalSearch or $createContexts">
+                        <xsl:if test="$createContexts.phrasalSearch or $createContexts.create">
                             <xsl:call-template name="returnContextsArray"/>
                         </xsl:if>
                     </map>
@@ -395,9 +387,9 @@
                 of kwics set in the config.-->
         <xsl:variable name="contexts" as="element(span)+"
             select="
-            if ($phrasalSearch)
+            if ($createContexts.phrasalSearch)
             then current-group()
-            else subsequence(current-group(), 1, $maxKwicsToHarvest)"/>        
+            else subsequence(current-group(), 1, $createContexts.maxKwicsToHarvest)"/>        
         <xsl:variable name="contextCount" select="count($contexts)" as="xs:integer"/>
         
         <array xmlns="http://www.w3.org/2005/xpath-functions" key="contexts">
@@ -409,9 +401,9 @@
                 <xsl:sort select="hcmc:returnWeight(.)" order="descending"/>
                 <xsl:sort select="xs:integer(@ss-pos)" order="ascending"/>
                 
-                <xsl:if test="$verbose">
-                    <xsl:message expand-text="true">{$thisDoc/@data-staticSearch-relativeUri}: {@ss-stem} (ctx: {position()}/{$contextCount}):  pos: {@ss-pos}</xsl:message>
-                </xsl:if>
+
+                    <xsl:message use-when="$verbose" expand-text="true">{$thisDoc/@ss-uri}: {@ss-stem} (ctx: {position()}/{$contextCount}):  pos: {@ss-pos}</xsl:message>
+                
                 
                 <!--Accumulated properties map, which may or may not exist -->
                 <xsl:variable name="properties"
@@ -430,7 +422,7 @@
                         <xsl:sequence select="hcmc:returnContext(.)"/>
                     </string>
                     <!--Get the best fragment id if that's set-->
-                    <xsl:if test="$linkToFragmentId and @ss-fid">
+                    <xsl:if test="@ss-fid">
                         <string key="fid">
                             <xsl:value-of select="@ss-fid"/>
                         </string>
@@ -504,9 +496,9 @@
         
         <!--Now get the term frequency index document frequency (i.e. tf-idf) -->
         <xsl:variable name="tf-idf" select="$tf * $idf" as="xs:double"/>
-        <xsl:if test="$verbose">
-            <xsl:message>Calculated tf-idf: <xsl:sequence select="$tf-idf"/></xsl:message>
-        </xsl:if>
+        
+        <xsl:message use-when="$verbose">Calculated tf-idf: <xsl:sequence select="$tf-idf"/></xsl:message>
+        
         <xsl:sequence
             select="$tf * $idf"/>
     </xsl:function>
@@ -648,7 +640,7 @@
                                     as="xs:string*"/>
                                 <!--Return the string: we know we have to add the truncation string here too-->
                                 <xsl:sequence 
-                                    select="$kwicTruncateString || string-join($newTokens,' ') || $endSpace || $stringSoFar "/>
+                                    select="$createContexts.kwicTruncateString || string-join($newTokens,' ') || $endSpace || $stringSoFar "/>
                             </xsl:when>
                             <xsl:otherwise>
                                 <!--Otherwise, we're going left to right, which is simpler
@@ -660,7 +652,7 @@
                                     select="subsequence($tokens, 1, $tokenDiff)" 
                                     as="xs:string*"/>
                                 <xsl:sequence
-                                    select="$stringSoFar || $startSpace || string-join($newTokens,' ') || $kwicTruncateString"/>
+                                    select="$stringSoFar || $startSpace || string-join($newTokens,' ') || $createContexts.kwicTruncateString"/>
                             </xsl:otherwise>
                         </xsl:choose>
                     </xsl:break>
@@ -705,7 +697,7 @@
     </xd:doc>
     <xsl:function name="hcmc:getTotalTermsInDoc" as="xs:integer" new-each-time="no">
         <xsl:param name="docUri" as="xs:string"/>
-        <xsl:variable name="thisDoc" select="$tokenizedDocs[document-uri(.) = $docUri]" as="document-node()"/>
+        <xsl:variable name="thisDoc" select="$tokenizedDocs[base-uri(.) = $docUri]" as="document-node()"/>
         <xsl:variable name="thisDocSpans" select="$thisDoc//span[@ss-stem]" as="element(span)*"/>
         <!--We tokenize these since there can be multiple stems for a given span-->
         <xsl:variable name="thisDocStems" select="for $span in $thisDocSpans return tokenize($span/@ss-stem,'\s+')" as="xs:string+"/>
@@ -797,6 +789,12 @@
                         <!--Now fork on filter types and call the respective functions-->
                         <xsl:choose>
                             <xsl:when test="$thisFilterType = ('desc', 'feat')">
+                                <xsl:if test="$thisFilterType = 'feat'">
+                                    <number key="minNameLength">
+                                        <xsl:sequence 
+                                            select="min(($tokenizer.minWordLength, ($thisFilterMetas ! string-length(@content))))"/>
+                                    </number>
+                                </xsl:if>
                                 <xsl:sequence select="hcmc:createDescFeatFilterMap($thisFilterMetas, $thisFilterId)"/>
                             </xsl:when>
                             <xsl:when test="$thisFilterType = 'date'">
@@ -816,7 +814,7 @@
                 </xsl:variable>
                 <!--Now output the JSON-->
                 <xsl:result-document href="{$outDir || '/filters/' || $thisFilterId || $versionString || '.json'}" method="text">
-                    <xsl:value-of select="xml-to-json($tmpMap, map{'indent': $indentJSON})"/>
+                    <xsl:value-of select="xml-to-json($tmpMap)"/>
                 </xsl:result-document>
                 
             </xsl:for-each-group>
@@ -846,6 +844,7 @@
         <xsl:param name="filterIdPrefix" as="xs:string"/>
         
         <xsl:for-each-group select="$metas" group-by="xs:string(@content)">
+            <xsl:sort select="lower-case(current-grouping-key())"/>
             <xsl:variable name="thisName"
                 select="current-grouping-key()"
                 as="xs:string"/>
@@ -866,7 +865,7 @@
                     <xsl:value-of select="if (exists($declaredSortKey)) then $declaredSortKey else $thisName"/>
                 </string>
                 <array key="docs">
-                    <xsl:for-each-group select="$currMetas" group-by="string(ancestor::html/@data-staticSearch-relativeUri)">
+                    <xsl:for-each-group select="$currMetas" group-by="string(ancestor::html/@ss-uri)">
                         <string><xsl:value-of select="current-grouping-key()"/></string>
                     </xsl:for-each-group>
                 </array>
@@ -915,13 +914,13 @@
             
             <!--If there under two categories, and we're grouping, then we have a lopsided boolean-->
             <xsl:if test="last() lt 2">
-                <xsl:message><xsl:value-of select="$filterId"/> only contains <xsl:value-of select="$thisValue"/>.</xsl:message>
+                <xsl:message>WARNING: <xsl:value-of select="$filterId"/> only contains <xsl:value-of select="$thisValue"/>.</xsl:message>
             </xsl:if>
             
             <map key="{$filterId}" xmlns="http://www.w3.org/2005/xpath-functions">
                 <string key="value"><xsl:value-of select="$thisValue"/></string>
                 <array key="docs">
-                    <xsl:for-each-group select="$currMetas" group-by="string(ancestor::html/@data-staticSearch-relativeUri)">
+                    <xsl:for-each-group select="$currMetas" group-by="string(ancestor::html/@ss-uri)">
                         <string><xsl:value-of select="current-grouping-key()"/></string>
                     </xsl:for-each-group>
                 </array>
@@ -945,7 +944,7 @@
         <xsl:param name="metas" as="element(meta)+"/>
         <xsl:param name="filterIdPrefix" as="xs:string"/>
         <map key="docs" xmlns="http://www.w3.org/2005/xpath-functions">
-            <xsl:for-each-group select="$metas" group-by="string(ancestor::html/@data-staticSearch-relativeUri)">
+            <xsl:for-each-group select="$metas" group-by="string(ancestor::html/@ss-uri)">
                 <xsl:variable name="docUri" select="current-grouping-key()" as="xs:string"/>
                 <xsl:variable name="metasForDoc" select="current-group()" as="element(meta)+"/>
                 <array key="{$docUri}">
@@ -978,7 +977,7 @@
         <xsl:param name="metas" as="element(meta)+"/>
         <xsl:param name="filterIdPrefix" as="xs:string"/>
         <map key="docs" xmlns="http://www.w3.org/2005/xpath-functions">
-            <xsl:for-each-group select="$metas" group-by="string(ancestor::html/@data-staticSearch-relativeUri)">
+            <xsl:for-each-group select="$metas" group-by="string(ancestor::html/@ss-uri)">
                 <xsl:variable name="docUri" select="current-grouping-key()" as="xs:string"/>
                 <xsl:variable name="metasForDoc" select="current-group()" as="element(meta)+"/>
                 <array key="{$docUri}">
@@ -1008,7 +1007,7 @@
             <xsl:variable name="map">
                 <xsl:apply-templates select="$stopwordsFileXml" mode="dictToArray"/>
             </xsl:variable>
-            <xsl:value-of select="xml-to-json($map, map{'indent': $indentJSON})"/>
+            <xsl:value-of select="xml-to-json($map)"/>
         </xsl:result-document>
     </xsl:template>
     
@@ -1031,7 +1030,7 @@
             <xsl:variable name="map" as="element(j:map)">
                 <map xmlns="http://www.w3.org/2005/xpath-functions">
                     <xsl:for-each select="$tokenizedDocs//html">
-                        <array key="{@data-staticSearch-relativeUri}">
+                        <array key="{@ss-uri}">
                             <string><xsl:value-of select="hcmc:getDocTitle(.)"/></string>
                              <!--Add a thumbnail graphic if one is specified. This generates
                             an empty string or nothing if there isn't. -->
@@ -1041,7 +1040,7 @@
                     </xsl:for-each>
                 </map>
             </xsl:variable>
-            <xsl:sequence select="xml-to-json($map, map{'indent': $indentJSON})"/>
+            <xsl:sequence select="xml-to-json($map)"/>
         </xsl:result-document>
     </xsl:template>
     
@@ -1094,7 +1093,7 @@
             <xsl:variable name="map">
                 <xsl:apply-templates select="doc($configFile)" mode="configToArray"/>
             </xsl:variable>
-            <xsl:value-of select="xml-to-json($map, map{'indent': $indentJSON})"/>
+            <xsl:value-of select="xml-to-json($map)"/>
         </xsl:result-document>
     </xsl:template>
     
@@ -1163,8 +1162,19 @@
         </xsl:element>
     </xsl:template>
     
-    
-    
+    <xd:doc>
+        <xd:desc>Template to convert an hcmc:filters element to a JSON array. Note that 
+        we do not currently bother serializing the html:span element inside an hcmc:filter 
+        into the JSON; for the moment, we just record the fact that a custom label
+        was supplied.</xd:desc>
+    </xd:doc>
+    <xsl:template match="hcmc:filters" mode="configToArray">
+        <j:array key="filtersWithCustomLabels">
+                <xsl:for-each select="child::hcmc:filter">
+                    <j:string><xsl:value-of select="@filterName"/></j:string>
+                </xsl:for-each>
+        </j:array>
+    </xsl:template>
     
     <xd:doc>
         <xd:desc><xd:ref name="hcmc:normalize-boolean">hcmc:normalize-boolean</xd:ref>
@@ -1195,16 +1205,20 @@
         <xsl:choose>
             <xsl:when test="exists($docTitle)">
                 <xsl:if test="count($docTitle) gt 1">
-                    <xsl:message>WARNING: Multiple docTitles declared in <xsl:value-of select="$doc/@data-staticSearch-relativeUri"/>. Using <xsl:value-of select="$docTitle[1]/@content"/></xsl:message>
+                    <xsl:message>WARNING: Multiple docTitles declared in <xsl:value-of select="$doc/@ss-uri"/>. Using '<xsl:value-of select="$docTitle[1]/@content"/>'.</xsl:message>
                 </xsl:if>
                 <xsl:value-of select="normalize-space($docTitle[1]/@content)"/>
             </xsl:when>
             <xsl:when test="string-length($defaultTitle) gt 0">
                 <xsl:value-of select="$defaultTitle"/>
             </xsl:when>
-            <xsl:otherwise>
-                <xsl:message>WARNING: No document title found in <xsl:value-of select="$doc/@data-staticSearch-relativeUri"/>. Using <xsl:value-of select="$doc/@id"/></xsl:message>
+            <xsl:when test="string-length($doc/@id) gt 0">
+                <xsl:message>WARNING: No document title found in <xsl:value-of select="$doc/@ss-uri"/>. Using '<xsl:value-of select="$doc/@id"/>'.</xsl:message>
                 <xsl:value-of select="$doc/@id"/>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:message>WARNING: No document title found in <xsl:value-of select="$doc/@ss-uri"/>. Using '<xsl:value-of select="$doc/@ss-uri"/>'.</xsl:message>
+                <xsl:value-of select="$doc/@ss-uri"/>
             </xsl:otherwise>
         </xsl:choose>
     </xsl:function>
@@ -1232,7 +1246,7 @@
         <xsl:choose>
             <xsl:when test="exists($docImage)">
                 <xsl:if test="count($docImage) gt 1">
-                    <xsl:message>WARNING: Multiple docImages declared in <xsl:value-of select="$doc/@data-staticSearch-relativeUri"/>. Using <xsl:value-of select="$docImage[1]/@content"/></xsl:message>
+                    <xsl:message>WARNING: Multiple docImages declared in <xsl:value-of select="$doc/@ss-uri"/>. Using '<xsl:value-of select="$docImage[1]/@content"/>'.</xsl:message>
                 </xsl:if>
                 <j:string><xsl:value-of select="$docImage[1]/@content"/></j:string>
             </xsl:when>
@@ -1257,7 +1271,7 @@
             as="element(meta)*"/>
         <xsl:if test="exists($docSortKey)">
             <xsl:if test="count($docSortKey) gt 1">
-                <xsl:message>WARNING: Multiple docSortKeys declared in <xsl:value-of select="$doc/@data-staticSearch-relativeUri"/>. Using <xsl:value-of select="$docSortKey[1]/@content"/></xsl:message>
+                <xsl:message>WARNING: Multiple docSortKeys declared in <xsl:value-of select="$doc/@ss-uri"/>. Using '<xsl:value-of select="$docSortKey[1]/@content"/>'.</xsl:message>
             </xsl:if>
             <j:string><xsl:value-of select="$docSortKey[1]/@content"/></j:string>
         </xsl:if>
