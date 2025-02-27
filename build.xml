@@ -50,8 +50,9 @@
     <property name="siteDir" value="${basedir}/site"/>
     
     <!-- Which GitHub branch of the staticSearch code we want to use in the build. Typically
-  main or dev, unless testing a feature branch. -->
-    <property name="staticSearchBranch" value="release-1.4"/>
+  main or dev, unless testing a feature branch. NOTE: We no longer use this, since we now
+    hard-code a specific staticSearch distribution set in the repo. -->
+    <!--<property name="staticSearchBranch" value="release-1.4"/>-->
     
     <!--  Some paths, libs and tasks. (May not all be needed.) -->
     <taskdef resource="net/sf/antcontrib/antcontrib.properties"/>

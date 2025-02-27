@@ -385,10 +385,11 @@ create a new file? (o=overwrite, n=new)"
       files, et cetera. Note that this task will likely create *a lot* of files and may take some
       time, depending on the size of the resource collection. </description>
     <echo message="Creating individual JSON files..."/>
-    <java classpath="${ssSaxon}" classname="net.sf.saxon.Transform" failonerror="true" fork="true">
+    <java classpath="${ssSaxon}" classname="net.sf.saxon.Transform" failonerror="true">
       <arg value="-xsl:${ssBaseDir.converted}/xsl/json.xsl"/>
       <arg value="-s:${ssBaseDir.converted}/xsl/json.xsl"/>
       <arg value="--suppressXsltNamespaceCheck:on"/>
+      <jvmarg value="-Xmx4096m"/>
     </java>
   </target>
 
