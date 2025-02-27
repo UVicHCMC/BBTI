@@ -1,2 +1,2 @@
-Branch: dev
-Commit: f4895791a65b6c195a06f98aaacf1cd9cb48b82e
+Branch: issue-341-config
+Commit: 841b3f1bcc23754fd7c87eb9f76d3f4048c23e15

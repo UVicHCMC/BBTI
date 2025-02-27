@@ -1,60 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<config xmlns="http://hcmc.uvic.ca/ns/staticSearch" version="1">
-    <params>
-        <searchFile>site/search.html</searchFile>
-        <versionFile>gitHash.txt</versionFile>
-        <recurse>true</recurse>
-        <linkToFragmentId>true</linkToFragmentId>
-        <scrollToTextFragment>false</scrollToTextFragment>
-        <phrasalSearch>true</phrasalSearch>
-        <wildcardSearch>true</wildcardSearch>
-        <createContexts>true</createContexts>
-        <resultsPerPage>200</resultsPerPage>
-        <minWordLength>2</minWordLength>
-        <maxKwicsToHarvest>3</maxKwicsToHarvest>
-        <maxKwicsToShow>3</maxKwicsToShow>
-        <totalKwicLength>10</totalKwicLength>
-        <kwicTruncateString>...</kwicTruncateString>
-        <verbose>false</verbose>
-        <stopwordsFile>bbti_stopwords.txt</stopwordsFile>
-        <dictionaryFile>staticSearch/xsl/english_words.txt</dictionaryFile>
-        <indentJSON>true</indentJSON>
-        <outputFolder>staticSearch</outputFolder>
-    </params>
-    
-    <rules>
-        <rule weight="3"
-            match="h2"/>
-        <!--<rule weight="2"
+<!--Configuration file file:/home/mholmes/BBTI/staticSearch/../config_staticSearch.xml converted to version 2 2025-02-27.-->
+<config xmlns="http://hcmc.uvic.ca/ns/staticSearch" version="2">
+   <params>
+      <searchPage file="site/search.html"/>
+      <index recurse="true"/>
+      <stopwords file="bbti_stopwords.txt"/>
+      <dictionary file="staticSearch/xsl/english_words.txt"/>
+      <scoringAlgorithm name="raw"/>
+      <stemmer dir="stemmers/en/"/>
+      <tokenizer minWordLength="2"/>
+      <createContexts create="true"
+                      phrasalSearch="true"
+                      wildcardSearch="true"
+                      maxKwicLength="10"
+                      kwicTruncateString="..."/>
+      <results resultsPerPage="200" maxKwicsToShow="3" maxResults="2000"/>
+      <version file="gitHash.txt"/>
+      <output dir="staticSearch"/>
+   </params>
+   <rules>
+      <rule weight="3" match="h2"/>
+      <!--<rule weight="2"
             match="h3"/>-->
-        <rule weight="0"
-            match="script | style"/>
-        <rule weight="0" 
-            match="header"/>
-        <rule weight="0" 
-            match="h1"/>
-        <!-- h4s are all captions. -->
-        <rule weight="0" match="h4"/>
-        <rule weight="0" 
-            match="nav"/>
-        <rule weight="0" 
-            match="footer"/>
-        <rule weight="0" match="span[@class='extraInfo']"/>  
-        <rule weight="0" match="span[@class='bbtiId']"/>  
-        <rule weight="0" match="span[@class='countryName']"/>  
-    </rules>
-    
-    <contexts>
-        <context match="div[@class='note']" label="Notes"/>
-        <context match="div[@class='address']" label="Addresses"/>
-        <context match="h3[@class='name']" label="Names"/>
-    </contexts>
-    
-  <!--<excludes>
+      <rule weight="0" match="script | style"/>
+      <rule weight="0" match="header"/>
+      <rule weight="0" match="h1"/>
+      <!-- h4s are all captions. -->
+      <rule weight="0" match="h4"/>
+      <rule weight="0" match="nav"/>
+      <rule weight="0" match="footer"/>
+      <rule weight="0" match="span[@class='extraInfo']"/>
+      <rule weight="0" match="span[@class='bbtiId']"/>
+      <rule weight="0" match="span[@class='countryName']"/>
+   </rules>
+   <contexts>
+      <context match="div[@class='note']" label="Notes"/>
+      <context match="div[@class='address']" label="Addresses"/>
+      <context match="h3[@class='name']" label="Names"/>
+   </contexts>
+   <!--<excludes>
     <!-\-<exclude match="meta[contains(@name,'Document type')]" type="filter"/>-\->
     <!-\- Exclude everything that isn't a post. -\->
     <!-\-<exclude type="index" match="html[not(descendant::nav[@class='crumbs'])]"/>-\->
     <!-\-<exclude match="meta[contains-token(@class,'excludedMeta')]" type="filter"/>-\->
   </excludes>-->
-    
 </config>
