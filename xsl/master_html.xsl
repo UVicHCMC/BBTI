@@ -309,7 +309,7 @@
         <xsl:if test="$content[self::org]">
             <xsl:variable name="dates" as="xs:string*" select="distinct-values((for $s in $content/state[@type='dateStates']/state return hcmc:getYear($s)))"/>
             <xsl:for-each select="$content/descendant::settlement[string-length(.) gt 2]">
-                <meta name="City/town" class="staticSearch_desc" content="{replace(., '[\?\.]$', '')}"/>
+                <meta name="City/town" class="staticSearch_desc" content="{.}"/>
             </xsl:for-each>
             
             <xsl:for-each select="$content/descendant::region[string-length(.) gt 0]">
