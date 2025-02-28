@@ -8,11 +8,17 @@
    
    <div>
       <head>New in edition 2.0.7b</head>
-      <p>Released ????, 2025</p>
+      <p>Released February 28, 2025</p>
       <list>
          <item>Change to the search page Counties listing to allow searching 
             specifically for records with cities/towns that are not linked to 
             a county.</item>
+         <item>Bugfix and enhancement for search page controls: a new County/Region
+         titled <q>? (Unknown/Unspecified)</q> has been added to the Counties selection
+            list which allows selection of records where a city/town has been specified
+            but not a county; this also fixes a bug whereby such cities and towns would
+            be listed under any and all counties.
+         </item>
       </list>
    </div>
    

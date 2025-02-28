@@ -163,7 +163,7 @@
                                                 <String>http://www.tei-c.org/ns/1.0</String>
                                             </field>
                                             <field name="rootElem">
-                                                <String>*</String>
+                                                <String>*.xml</String>
                                             </field>
                                             <field name="fileName">
                                                 <String>*</String>
