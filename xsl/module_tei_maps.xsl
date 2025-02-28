@@ -107,6 +107,7 @@
         <xsl:map>
             <!-- Initial entry for the question mark placeholder. -->
             <xsl:map-entry key="'?'" select="$capUnknownUnspecified"/>
+            <xsl:map-entry key="$capUnknownUnspecified" select="$capUnknownUnspecified"/>
             <xsl:for-each select="$teiSource//listPlace[@xml:id='counties']/descendant::place[child::idno[@type='BBTI'][string-length(.) gt 1]]">
                 <xsl:map-entry key="xs:string(child::idno[@type='BBTI'])" select="xs:string(placeName)"/>
             </xsl:for-each>
@@ -198,6 +199,8 @@
                 <xsl:sort select="lower-case(current-grouping-key())"/>
                 <xsl:variable name="counties" as="xs:string*" select="for $c in distinct-values(((current-group()/descendant::region/xs:string(.)))) return if ($c eq '?') then $capUnknownUnspecified else $c"/>
                 <xsl:map-entry key="current-grouping-key()" select="distinct-values(($counties))"/>
+                <xsl:if test="current-group()/descendant::region[. eq '?']">
+                </xsl:if>
             </xsl:for-each-group>
         </xsl:map>
     </xsl:variable>
