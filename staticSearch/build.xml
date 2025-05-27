@@ -12,7 +12,7 @@
         *  build the test site by default.                       *
         *                                                        *
         *  Note that you can also specify a relative path using  *
-        *  -DssConfigFile=../rel/cfg.xml *                             *
+        *  -DssConfig=../rel/cfg.xml *                             *
         *                                                        *
         **********************************************************
     -->
@@ -171,7 +171,7 @@
      *                                                              *
      ****************************************************************-->
 
-  <target name="init">
+  <target name="init" depends="validate.config">
     <description>
       TARGET: init
       This target initializes the static search indexing process. It first
@@ -385,11 +385,12 @@ create a new file? (o=overwrite, n=new)"
       files, et cetera. Note that this task will likely create *a lot* of files and may take some
       time, depending on the size of the resource collection. </description>
     <echo message="Creating individual JSON files..."/>
-    <java classpath="${ssSaxon}" classname="net.sf.saxon.Transform" failonerror="true">
+    <java classpath="${ssSaxon}" classname="net.sf.saxon.Transform" failonerror="true" fork="true"
+    maxmemory="8g">
+      <jvmarg value="-Xmx8g"/>
       <arg value="-xsl:${ssBaseDir.converted}/xsl/json.xsl"/>
       <arg value="-s:${ssBaseDir.converted}/xsl/json.xsl"/>
       <arg value="--suppressXsltNamespaceCheck:on"/>
-      <jvmarg value="-Xmx4096m"/>
     </java>
   </target>
 
@@ -608,7 +609,7 @@ create a new file? (o=overwrite, n=new)"
   </target>
 
   <target name="all"
-    depends="validate.config, init, validate, config, tokenize, json, buildJS, copyFiles, makeSearchPage, report, clean">
+    depends="init, validate, config, tokenize, json, buildJS, copyFiles, makeSearchPage, report, clean">
     <description>
       TARGET: all
       Default target for running the entire static search creation process.
@@ -616,7 +617,7 @@ create a new file? (o=overwrite, n=new)"
   </target>
 
   <target name="allButValidate"
-    depends="validate.config, init, config, tokenize, json, buildJS, copyFiles, makeSearchPage, report, clean">
+    depends="init, config, tokenize, json, buildJS, copyFiles, makeSearchPage, report, clean">
     <description>
       TARGET: allButValidate
       Target to override validation, which is helpful in cases
@@ -625,7 +626,7 @@ create a new file? (o=overwrite, n=new)"
   </target>
 
   <target name="test"
-    depends="validate.config, init, validate, config, tokenize, json, buildJS, copyFiles, makeSearchPage, makeDebugSearchPage, makeManualDebugSearchPage, report">
+    depends="init, validate, config, tokenize, json, buildJS, copyFiles, makeSearchPage, makeDebugSearchPage, makeManualDebugSearchPage, report">
     <description>
       TARGET: test
       Target that runs the whole process, but does not clean up the
@@ -634,7 +635,7 @@ create a new file? (o=overwrite, n=new)"
   </target>
 
   <target name="basic"
-    depends="validate.config, init, validate, config, tokenize, json, buildJS, copyFiles, makeSearchPage, clean">
+    depends="init, validate, config, tokenize, json, buildJS, copyFiles, makeSearchPage, clean">
     <description>
       TARGET: basic
       Target that runs the whole process other than the report creation.
