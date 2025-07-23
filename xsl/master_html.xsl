@@ -339,7 +339,7 @@
             
             <xsl:variable name="sourceCount" as="xs:integer" select="count($content/descendant::bibl[@type='source'])"/>
             
-            <meta name="Sources for record" class="staticSearchDesc" content="{if ($sourceCount lt 1) then 'No source' else if ($sourceCount eq 1) then 'Single source' else 'Multiple sources'}"/>
+            <meta name="Sources for record" class="staticSearch_desc" content="{if ($sourceCount lt 1) then 'No source' else if ($sourceCount eq 1) then 'Single source' else 'Multiple sources'}"/>
             
         </xsl:if>
     </xsl:template>
