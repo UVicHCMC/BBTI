@@ -7,6 +7,26 @@
    resuscitated site on December 20, 2024.</p>
    
    <div>
+      <head>New in edition 2.0.8b</head>
+      <p>Released July 23, 2025</p>
+      <list>
+         <item>A new filter, <q>Number of sources</q>, has been added 
+         to the search page. At the BBTI Workshop in Birmingham on July 22,
+         we discussed the difference between records which appear to 
+         be essentially citations—assertions that a single specific source 
+         provides X information about Y person—and records which are based on
+         multiple sources, and therefore may be, or are suspected of being,
+         edited syntheses of the information in these sources. These two 
+         types of record are performing slightly different roles, and some 
+         members of the community feel it is important to distinguish between
+         them. Investigating this, it turns out that there are also more
+         than 2,800 records which have no associated source. Therefore it
+         seemed useful to provide an option to filter search results based
+         on these three types of record.</item>
+      </list>
+   </div>
+   
+   <div>
       <head>New in edition 2.0.7b</head>
       <p>Released February 28, 2025</p>
       <list>
