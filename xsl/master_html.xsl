@@ -337,6 +337,10 @@
                 <meta name="Non-book trade" class="staticSearch_desc" content="{map:get($mapTradeIdsToStrings, substring-after(@corresp, 'trd:'))}"/>
             </xsl:for-each>
             
+            <xsl:variable name="sourceCount" as="xs:integer" select="count($content/descendant::bibl[@type='source'])"/>
+            
+            <meta name="Sources for record" class="staticSearchDesc" content="{if ($sourceCount lt 1) then 'No source' else if ($sourceCount eq 1) then 'Single source' else 'Multiple sources'}"/>
+            
         </xsl:if>
     </xsl:template>
     
