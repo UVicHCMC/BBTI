@@ -32,6 +32,7 @@
       <rule weight="0" match="span[@class='extraInfo']"/>
       <rule weight="0" match="span[@class='bbtiId']"/>
       <rule weight="0" match="span[@class='countryName']"/>
+      <rule weight="0" match="dialog"/>
    </rules>
    <contexts>
       <context match="div[@class='note']" label="Notes"/>
