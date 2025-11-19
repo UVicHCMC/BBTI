@@ -214,7 +214,7 @@
                     xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
                     <xsl:for-each select="$teiSource[child::body]">
                         <url>
-                            <loc>{'https://hcmc.uvic.ca/project/bbti/' || @xml:id || '.html'}</loc>
+                            <loc>{'https://hcmc.uvic.ca/project/bbti/' || xs:string(body/@xml:id) || '.html'}</loc>
                             <lastmod>{$nowDateIso}</lastmod>
                             <changefreq>monthly</changefreq>
                         </url>
