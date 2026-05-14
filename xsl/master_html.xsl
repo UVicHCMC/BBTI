@@ -23,10 +23,11 @@
     </xd:doc>
     
     <xd:doc>
-        <xd:desc>We need the maps file and the functions file.</xd:desc>
+        <xd:desc>We need modules.</xd:desc>
     </xd:doc>
     <xsl:include href="module_tei_maps.xsl"/>
     <xsl:include href="module_html_functions.xsl"/>
+    <xsl:include href="module_captions.xsl"/>
     
     <xd:doc>
         <xd:desc>The main mode we use is html. We make it shallow-copy so that 
@@ -156,6 +157,7 @@
                 <string key="type">Cities to Counties</string>
                 <map key="cities">
                     <xsl:for-each select="map:keys($mapCityNamesToCountyKeys)">
+                        <xsl:sort select="."/>
                         <xsl:variable name="cityName" select="."/>
                         <xsl:variable name="countyKeys" as="xs:string*" select="map:get($mapCityNamesToCountyKeys, $cityName)"/>
                         <array key="{$cityName}">
@@ -239,7 +241,7 @@
                     xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
                     <xsl:for-each select="$teiSource[child::body]">
                         <url>
-                            <loc>{'https://hcmc.uvic.ca/project/bbti/' || @xml:id || '.html'}</loc>
+                            <loc>{'https://hcmc.uvic.ca/project/bbti/' || xs:string(body/@xml:id) || '.html'}</loc>
                             <lastmod>{$nowDateIso}</lastmod>
                             <changefreq>monthly</changefreq>
                         </url>
@@ -334,11 +336,20 @@
         <xsl:if test="$content[self::org]">
             <xsl:variable name="dates" as="xs:string*" select="distinct-values((for $s in $content/state[@type='dateStates']/state return hcmc:getYear($s)))"/>
             <xsl:for-each select="$content/descendant::settlement[string-length(.) gt 2]">
-                <meta name="City/town" class="staticSearch_desc" content="{replace(., '[\?\.]$', '')}"/>
+                <meta name="City/town" class="staticSearch_desc" content="{.}"/>
             </xsl:for-each>
             
-            <xsl:for-each select="$content/descendant::region[string-length(.) gt 1]">
-                <meta name="County/region" class="staticSearch_desc" content="{map:get($mapCountyKeysToStrings, xs:string(.))}"/>
+            <xsl:for-each select="$content/descendant::region[string-length(.) gt 0]">
+                <xsl:choose>
+                    <xsl:when test=". = '?'">
+                        
+                        <meta name="County/region" class="staticSearch_desc" content="{$capUnknownUnspecified}"/>
+                    </xsl:when>
+                    <xsl:otherwise>
+                        
+                        <meta name="County/region" class="staticSearch_desc" content="{map:get($mapCountyKeysToStrings, xs:string(.))}"/>
+                    </xsl:otherwise>
+                </xsl:choose>
             </xsl:for-each>
             
             <!-- This is where we add all our meta tags for the search. -->
@@ -352,6 +363,10 @@
             <xsl:for-each select="$content/state/state[contains(@type, 'nonBookTrade')]">
                 <meta name="Non-book trade" class="staticSearch_desc" content="{map:get($mapTradeIdsToStrings, substring-after(@corresp, 'trd:'))}"/>
             </xsl:for-each>
+            
+            <xsl:variable name="sourceCount" as="xs:integer" select="count($content/descendant::bibl[@type='source'])"/>
+            
+            <meta name="Sources for record" class="staticSearch_desc" content="{if ($sourceCount lt 1) then 'No source' else if ($sourceCount eq 1) then 'Single source' else 'Multiple sources'}"/>
             
         </xsl:if>
     </xsl:template>
@@ -695,8 +710,6 @@
         <xd:desc>This generates a complete listing of all the sources.</xd:desc>
     </xd:doc>
     <xsl:template match="processing-instruction('sourcesTable')" mode="html">
-        <xsl:variable name="capBbtiId" as="xs:string" select="'BBTI ID'"/>
-        <xsl:variable name="capSource" as="xs:string" select="'Source'"/>
         <ul class="letterLinks">
             <xsl:for-each select="distinct-values((for $b in $teiSource//listBibl[@xml:id='sourceshtml']/bibl return substring(normalize-space($b/@n), 1, 1)))">
                 <li><a href="#az_{lower-case(.)}"><xsl:sequence select="."/></a></li>
@@ -741,9 +754,6 @@
         <xd:desc>This generates a tabular listing of the feather references.</xd:desc>
     </xd:doc>
     <xsl:template match="processing-instruction('featherTable')" mode="html">
-        <xsl:variable name="capAuthor" as="xs:string" select="'Author'"/>
-        <xsl:variable name="capTitle" as="xs:string" select="'Title'"/>
-        <xsl:variable name="capDetails" as="xs:string" select="'Publishing Details'"/>
         <xsl:variable name="sortedBibls" as="element(bibl)+">
             <xsl:for-each select="$teiSource//listBibl[@xml:id='feather']/bibl">
                 <xsl:sort select="replace(normalize-space(lower-case(concat(author, title))), '[^a-z]+', '')"/>

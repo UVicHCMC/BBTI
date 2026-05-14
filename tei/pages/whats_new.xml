@@ -6,6 +6,42 @@
    <p>This page records changes made since the initial 2.0b (beta) release of the 
    resuscitated site on December 20, 2024.</p>
    
+   <div xml:id="ed_208b">
+      <head>New in edition 2.0.8b</head>
+      <p>Released July 23, 2025</p>
+      <list>
+         <item>A new filter, <q>Number of sources</q>, has been added 
+         to the search page. At the BBTI Workshop in Birmingham on July 22,
+         we discussed the difference between records which appear to 
+         be essentially citations—assertions that a single specific source 
+         provides X information about Y person—and records which are based on
+         multiple sources, and therefore may be, or are suspected of being,
+         edited syntheses of the information in these sources. These two 
+         types of record are performing slightly different roles, and some 
+         members of the community feel it is important to distinguish between
+         them. Investigating this, it turns out that there are also more
+         than 2,800 records which have no associated source. Therefore it
+         seemed useful to provide an option to filter search results based
+         on these three types of record.</item>
+      </list>
+   </div>
+   
+   <div>
+      <head>New in edition 2.0.7b</head>
+      <p>Released February 28, 2025</p>
+      <list>
+         <item>Change to the search page Counties listing to allow searching 
+            specifically for records with cities/towns that are not linked to 
+            a county.</item>
+         <item>Bugfix and enhancement for search page controls: a new County/Region
+         titled <q>? (Unknown/Unspecified)</q> has been added to the Counties selection
+            list which allows selection of records where a city/town has been specified
+            but not a county; this also fixes a bug whereby such cities and towns would
+            be listed under any and all counties.
+         </item>
+      </list>
+   </div>
+   
    <div>
       <head>New in edition 2.0.6.1b</head>
       <p>Released January 31, 2025</p>

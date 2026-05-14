@@ -106,7 +106,8 @@
     <xsl:variable name="mapCountyKeysToStrings" as="map(xs:string, xs:string)">
         <xsl:map>
             <!-- Initial entry for the question mark placeholder. -->
-            <xsl:map-entry key="'?'" select="'?'"/>
+            <xsl:map-entry key="'?'" select="$capUnknownUnspecified"/>
+            <xsl:map-entry key="$capUnknownUnspecified" select="$capUnknownUnspecified"/>
             <xsl:for-each select="$teiSource//listPlace[@xml:id='counties']/descendant::place[child::idno[@type='BBTI'][string-length(.) gt 1]]">
                 <xsl:map-entry key="xs:string(child::idno[@type='BBTI'])" select="xs:string(placeName)"/>
             </xsl:for-each>
@@ -120,7 +121,7 @@
         <xsl:map>
             <xsl:for-each-group select="$teiSource//org" group-by="descendant::settlement/text()">
                 <xsl:sort select="current-grouping-key()"/>
-                <xsl:map-entry key="current-grouping-key()" select="distinct-values(descendant::region)"/>
+                <xsl:map-entry key="current-grouping-key()" select="distinct-values((for $r in current-group()/descendant::region return if ($r eq '?') then $capUnknownUnspecified else $r))"/>
             </xsl:for-each-group>
             
             <!-- Initial entry for the question mark placeholder. -->
@@ -196,7 +197,10 @@
         <xsl:map>
             <xsl:for-each-group select="$teiSource//org" group-by="xs:string(location/address/settlement)">
                 <xsl:sort select="lower-case(current-grouping-key())"/>
-                <xsl:map-entry key="current-grouping-key()" select="distinct-values(((current-group()/descendant::region/xs:string(.))))"/>
+                <xsl:variable name="counties" as="xs:string*" select="for $c in distinct-values(((current-group()/descendant::region/xs:string(.)))) return if ($c eq '?') then $capUnknownUnspecified else $c"/>
+                <xsl:map-entry key="current-grouping-key()" select="distinct-values(($counties))"/>
+                <xsl:if test="current-group()/descendant::region[. eq '?']">
+                </xsl:if>
             </xsl:for-each-group>
         </xsl:map>
     </xsl:variable>
