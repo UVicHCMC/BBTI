@@ -381,7 +381,7 @@ Options +Indexes
     
     <target name="diagnostics">
         <description>
-            TARGET buildDiagnostics
+            TARGET diagnostics
             
             This target runs XSLT to create the diagnostics output and copies
             required files to the output location.
